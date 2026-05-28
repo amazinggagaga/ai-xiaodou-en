@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Xiaodou</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{min-height:100vh;height:100vh;background:linear-gradient(135deg,#f5f5f7 0%,#fafafa 50%,#eef0f3 100%);font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;display:flex}
+.glass-card{display:flex;flex:1;background:rgba(255,255,255,.6);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:none;overflow:hidden;position:relative}
+.sidebar{width:220px;flex-shrink:0;padding:32px 0 20px;border-right:1px solid rgba(255,255,255,.5);display:flex;flex-direction:column}
+.sidebar-logo{display:flex;align-items:center;gap:10px;padding:0 24px;margin-bottom:30px}
+.logo-icon{width:34px;height:34px;background:#1a1a2e;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700}
+.logo-text{font-size:18px;font-weight:700;color:#1a1a2e;letter-spacing:1px}
+.nav-label{font-size:11px;color:#aaa;letter-spacing:2px;text-transform:uppercase;padding:0 24px;margin-bottom:10px}
+.nav-list{list-style:none;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 24px;color:#666;font-size:15px;cursor:pointer;transition:all .2s;border-right:3px solid transparent;user-select:none}
+.nav-item:hover{color:#1a1a2e;background:rgba(0,0,0,.03)}
+.nav-item.active{color:#1a1a2e;background:rgba(0,0,0,.05);border-right-color:#1a1a2e;font-weight:600}
+.nav-item .icon{font-size:18px}
+.nav-item .badge{margin-left:auto;background:rgba(0,0,0,.1);color:#1a1a2e;font-size:11px;padding:2px 8px;border-radius:10px}
+.sidebar-footer{padding:16px 24px 0;border-top:1px solid rgba(0,0,0,.04);margin-top:auto}
+.sidebar-footer a{display:block;color:#bbb;font-size:13px;text-decoration:none;margin-bottom:5px;cursor:pointer;transition:color .2s}
+.sidebar-footer a:hover{color:#1a1a2e}
+.main{flex:1;padding:32px 36px 20px;display:flex;flex-direction:column;overflow-y:auto}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-shrink:0}
+.top-bar h2{font-size:20px;font-weight:700;color:#1a1a2e}
+.top-bar h2 small{font-weight:400;font-size:14px;color:#999;margin-left:8px}
+.top-actions{display:flex;gap:16px}
+.top-actions a{color:#888;text-decoration:none;font-size:14px}
+.top-actions a:hover{color:#1a1a2e}
+.back-btn{color:#1a1a2e;text-decoration:none;font-size:14px;cursor:pointer}
+.back-btn:hover{opacity:.7}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;flex:1;align-content:start}
+.tool-card{background:rgba(255,255,255,.7);border-radius:18px;padding:24px;border:1px solid rgba(0,0,0,.06);transition:transform .2s,box-shadow .2s}
+.tool-card:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,.06)}
+.tool-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px;background:rgba(0,0,0,.05);color:#1a1a2e}
+.icon-purple,.icon-blue,.icon-green,.icon-orange,.icon-pink,.icon-teal{background:rgba(0,0,0,.05);color:#1a1a2e}
+.tool-card h3{font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:6px}
+.tool-card p{font-size:13px;color:#999;line-height:1.6;margin-bottom:14px}
+.tool-tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;color:#1a1a2e;background:rgba(0,0,0,.07)}
+.tool-action{display:inline-block;margin-top:10px;padding:6px 18px;border-radius:16px;font-size:13px;font-weight:500;text-decoration:none;cursor:pointer;border:1px solid rgba(0,0,0,.2);color:#1a1a2e;background:transparent;transition:all .2s}
+.tool-action:hover{background:#1a1a2e;color:#fff;border-color:#1a1a2e}
+.tool-locked{color:#ccc;border-color:#eee;cursor:default}
+.tool-locked:hover{background:transparent;color:#ccc;border-color:#eee}
+.main-footer{text-align:center;padding-top:20px;margin-top:auto;flex-shrink:0;font-size:12px;color:#ccc}
+.tool-page{flex:1;display:flex;flex-direction:column}
+.tool-page-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-shrink:0}
+.tool-page-header h3{font-size:18px;color:#1a1a2e;font-weight:700}
+.tool-workspace{flex:1;display:flex;flex-direction:column;gap:16px}
+.tool-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.tool-textarea{flex:1;min-height:120px;padding:14px;border-radius:12px;border:1px solid rgba(0,0,0,.08);background:rgba(255,255,255,.8);font-family:'Menlo','Cascadia Code',monospace;font-size:13px;line-height:1.5;resize:vertical;outline:none;transition:border-color .2s}
+.tool-textarea:focus{border-color:#1a1a2e}
+.tool-select{padding:8px 14px;border-radius:10px;border:1px solid rgba(0,0,0,.08);background:rgba(255,255,255,.8);font-size:14px;outline:none;color:#333;cursor:pointer}
+.tool-select:focus{border-color:#1a1a2e}
+input.tool-select{font-size:14px;font-family:monospace}
+.tool-btn{padding:8px 22px;border-radius:10px;border:none;background:#1a1a2e;color:#fff;font-size:14px;font-weight:500;cursor:pointer;transition:opacity .2s}
+.tool-btn:hover{opacity:.85}
+.tool-btn-outline{background:transparent;border:1px solid rgba(0,0,0,.15);color:#1a1a2e}
+.tool-btn-outline:hover{background:rgba(0,0,0,.04)}
+@media(max-width:720px){.glass-card{flex-direction:column}.sidebar{width:100%;border-right:none;border-bottom:1px solid rgba(255,255,255,.5);padding:16px 0}.main{padding:20px}.grid{grid-template-columns:1fr}}
+.side-tabs{display:flex;margin:0 16px 16px;background:rgba(0,0,0,.04);border-radius:10px;padding:4px;gap:4px}
+.side-tab{flex:1;text-align:center;padding:8px 0;font-size:14px;color:#666;cursor:pointer;border-radius:7px;transition:all .2s;user-select:none}
+.side-tab:hover{color:#1a1a2e}
+.side-tab.active{background:#fff;color:#1a1a2e;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.search-btn{position:absolute;top:18px;right:20px;background:rgba(255,255,255,.8);border:1px solid rgba(0,0,0,.06);border-radius:10px;width:38px;height:38px;font-size:16px;cursor:pointer;transition:all .2s;z-index:10}
+.search-btn:hover{background:rgba(255,255,255,.95);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+#searchOverlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.3);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding-top:80px;backdrop-filter:blur(4px)}
+.search-box{background:#fff;border-radius:16px;width:90%;max-width:520px;box-shadow:0 12px 40px rgba(0,0,0,.15);overflow:hidden}
+#searchInput{width:100%;padding:16px 20px;border:none;outline:none;font-size:16px;color:#333}
+#searchResults{max-height:360px;overflow-y:auto}
+.search-item{padding:12px 20px;cursor:pointer;transition:background .15s;border-bottom:1px solid rgba(0,0,0,.04)}
+.search-item:hover{background:rgba(0,0,0,.04)}
+.search-item h4{font-size:14px;font-weight:600;color:#1a1a2e;margin-bottom:3px}
+.search-item p{font-size:12px;color:#999}
+.article-card{background:rgba(255,255,255,.7);border-radius:14px;padding:20px;border:1px solid rgba(0,0,0,.06);transition:transform .2s,box-shadow .2s;cursor:pointer}
+.stage-label{font-size:15px;font-weight:700;color:#1a1a2e;margin:28px 0 12px;padding-left:4px;display:flex;align-items:center;gap:8px}
+.stage-label::before{content:'';width:3px;height:18px;background:#1a1a2e;border-radius:2px}
+.article-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.05)}
+.article-card h3{font-size:16px;font-weight:600;color:#1a1a2e;margin-bottom:8px}
+.article-card p{font-size:13px;color:#999;line-height:1.6;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.article-meta{display:flex;gap:12px;font-size:12px;color:#bbb}
+.article-meta span{display:flex;align-items:center;gap:4px}
+.article-detail{flex:1;padding:40px 60px 24px;display:flex;flex-direction:column;overflow-y:auto}
+.article-inner{max-width:820px;margin:0 auto;width:100%}
+.article-detail h1{font-size:26px;font-weight:800;color:#1a1a2e;margin-bottom:6px;line-height:1.4;letter-spacing:-0.5px}
+.article-detail .article-meta{margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;gap:16px;font-size:13px;color:#aaa;align-items:center}
+.article-detail .article-meta::before{content:'';display:inline-block;width:4px;height:4px;border-radius:50%;background:#1a1a2e}
+.article-body{font-size:15px;line-height:2;color:#444;flex:1}
+.article-body h2{font-size:19px;font-weight:700;color:#1a1a2e;margin:36px 0 16px;padding-left:14px;border-left:3px solid #1a1a2e;line-height:1.4}
+.article-body h3{font-size:16px;font-weight:700;color:#1a1a2e;margin:28px 0 12px;padding:8px 14px;background:rgba(0,0,0,.04);border-radius:8px}
+.article-body p{margin-bottom:16px}
+.article-body code{background:rgba(0,0,0,.08);color:#1a1a2e;padding:2px 7px;border-radius:5px;font-size:13px;font-weight:500}
+.article-body pre{background:#1e1e2e;padding:18px 20px;border-radius:12px;overflow-x:auto;margin:20px 0;border:1px solid rgba(255,255,255,.08)}
+.article-body pre code{background:none;color:#cdd6f4;padding:0;font-size:13px;line-height:1.7;font-weight:400}
+.article-body ul,.article-body ol{margin:12px 0 16px 0;padding-left:0;list-style:none}
+.article-body ul li,.article-body ol li{margin-bottom:8px;padding-left:22px;position:relative}
+.article-body ul li::before{content:'';position:absolute;left:2px;top:10px;width:6px;height:6px;border-radius:50%;background:#1a1a2e}
+.article-body ol li{counter-increment:item}
+.article-body ol li::before{content:counter(item);position:absolute;left:0;top:1px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.1);color:#1a1a2e;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.article-body blockquote{border-left:3px solid #1a1a2e;padding:14px 20px;margin:20px 0;background:rgba(0,0,0,.03);border-radius:0 12px 12px 0;color:#555;font-style:italic}
+.article-body blockquote+p>blockquote,.article-body blockquote+blockquote{margin-top:-16px;border-radius:0 0 12px 12px}
+.code-wrap{position:relative;margin:20px 0}
+.code-wrap pre{margin:0}
+.copy-btn{position:absolute;top:8px;right:8px;padding:4px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);font-size:12px;cursor:pointer;transition:all .2s;z-index:2}
+.copy-btn:hover{background:rgba(255,255,255,.2);color:#fff}
+.copy-btn.copied{background:#1a1a2e;border-color:#1a1a2e;color:#fff}
+.article-body table{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px}
+.article-body thead th{border-top:2px solid #1a1a2e;border-bottom:1px solid rgba(0,0,0,.08);padding:10px 14px;text-align:left;font-weight:600;color:#1a1a2e;font-size:13px}
+.article-body tbody td{padding:10px 14px;border-bottom:1px solid rgba(0,0,0,.04);color:#555}
+.article-body tbody tr:last-child td{border-bottom:2px solid #1a1a2e}
+.article-body hr{border:none;height:1px;background:rgba(0,0,0,.08);margin:32px 0}
+.article-body strong{color:#1a1a2e;font-weight:700}
+.article-body a{color:#1a1a2e;text-decoration:none;border-bottom:1px dashed rgba(0,0,0,.3)}
+.article-nav-item{display:flex;align-items:center;gap:10px;padding:11px 24px;color:#666;font-size:15px;cursor:pointer;transition:all .2s;border-right:3px solid transparent;user-select:none}
+.article-nav-item:hover{color:#1a1a2e;background:rgba(0,0,0,.03)}
+.article-nav-item.active{color:#1a1a2e;background:rgba(0,0,0,.05);border-right-color:#1a1a2e;font-weight:600}
+.article-nav-item .icon{font-size:18px}
+#infoModal{position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;display:flex;align-items:center;justify-content:center}
+.modal-mask{position:absolute;inset:0;background:rgba(0,0,0,.2);backdrop-filter:blur(4px)}
+.modal-box{position:relative;background:#fff;border-radius:20px;padding:36px 32px 28px;max-width:400px;width:90%;box-shadow:0 16px 48px rgba(0,0,0,.12);z-index:1}
+.modal-close{position:absolute;top:12px;right:16px;font-size:20px;color:#ccc;cursor:pointer;transition:color .2s;line-height:1}
+.modal-close:hover{color:#333}
+.modal-box h2{font-size:20px;font-weight:700;color:#1a1a2e;margin-bottom:16px}
+.modal-box p{font-size:14px;line-height:1.8;color:#666;margin-bottom:12px}
+.modal-box .modal-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,.05)}
+.modal-box .modal-item:last-child{border-bottom:none}
+.modal-box .modal-item .mi-icon{width:36px;height:36px;border-radius:10px;background:rgba(0,0,0,.05);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.modal-box .modal-item .mi-text{font-size:14px;color:#333}
+.modal-box .modal-item .mi-text small{display:block;font-size:12px;color:#aaa;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="glass-card">
+<div class="sidebar">
+<div class="sidebar-logo"><div class="logo-icon">Dou</div><span class="logo-text">AI Xiaodou</span></div>
+<div class="side-tabs">
+<div class="side-tab active" data-tab="tools">🛠️ Tools</div>
+<div class="side-tab" data-tab="articles">📝 Articles</div>
+</div>
+<ul class="nav-list" id="toolsNav">
+<li class="nav-item" data-category="literature"><span class="icon">📚</span> Literature Search <span class="badge">3</span></li>
+<li class="nav-item active" data-category="tools"><span class="icon">🛠️</span> Productivity Tools <span class="badge">3</span></li>
+<li class="nav-item" data-category="data"><span class="icon">📊</span> Data Analysis <span class="badge">2</span></li>
+</ul>
+<div id="articlesNav" style="display:none">
+<div class="article-nav-item active" data-cat="all"><span class="icon">📚</span> All Articles</div>
+<div class="article-nav-item" data-cat="ai-research"><span class="icon">🤖</span> AI-Assisted Research</div>
+<div class="article-nav-item" data-cat="prompt"><span class="icon">💡</span> Prompt Sharing</div>
+</div>
+<div class="sidebar-footer">
+<a onclick="openModal('about')">📕 About AI Xiaodou</a>
+<a onclick="openModal('contact')">✉️ Contact Me</a>
+</div>
+</div>
+<div class="main" id="mainContent"></div>
+<div class="main" id="articleContent" style="display:none"></div>
+<div id="searchOverlay" style="display:none">
+<div class="search-box">
+<input type="text" id="searchInput" placeholder="Search articles…" autocomplete="off">
+<div id="searchResults"></div>
+</div>
+</div>
+<div id="infoModal" style="display:none">
+<div class="modal-mask" onclick="closeModal()"></div>
+<div class="modal-box">
+<div class="modal-close" onclick="closeModal()">✕</div>
+<div id="modalBody"></div>
+</div>
+</div>
+<button class="search-btn" onclick="openSearch()">🔍</button>
+</div>
+<script>
+const categories={
+literature:{name:'Literature Search',subtitle:'3 tools',icon:'📚',tools:[
+{icon:'📖',color:'purple',name:'Literature Search Assistant',desc:'Chinese arguments → Keyword extraction → Semantic Scholar/Crossref search → Sentence verification → One-click Zotero import',tag:'Coming Soon'},
+{icon:'📑',color:'blue',name:'Batch Literature Scanner',desc:'Batch topic search, LLM full-text paragraph scoring, review HTML report generation',tag:'Coming Soon'},
+{icon:'📋',color:'green',name:'Citation Verification Report',desc:'Auto-generate HTML verification report with source matching, DOI, and confidence scores',tag:'Coming Soon'}]},
+tools:{name:'Productivity Tools',subtitle:'3 tools',icon:'🛠️',tools:[
+{icon:'🔄',color:'blue',name:'Format Converter',desc:'15 format conversions: JSON/CSV/Markdown/YAML/Base64/URL, etc.',tag:'Online Tool',action:'Use →',toolPage:'format-converter'},
+{icon:'🔍',color:'green',name:'Data Cleaner',desc:'Deduplicate, remove blanks, sort, filter, find & replace, add line numbers',tag:'Online Tool',action:'Use →',toolPage:'data-cleaner'},
+{icon:'📝',color:'purple',name:'Note Tool',desc:'Markdown live preview, local auto-save, one-click export',tag:'Online Tool',action:'Use →',toolPage:'note-tool'}]},
+data:{name:'Data Analysis',subtitle:'2 tools',icon:'📊',tools:[
+{icon:'📈',color:'teal',name:'Survey Data Analysis',desc:'Auto-read Excel surveys, frequency stats, Likert scale conversion',tag:'Coming Soon'},
+{icon:'🧮',color:'pink',name:'Empirical Analysis Assistant',desc:'DID/PSM-DID/IV econometric model prompt generator',tag:'Coming Soon'}]}
+};
+const cm={purple:'icon-purple',blue:'icon-blue',green:'icon-green',orange:'icon-orange',pink:'icon-pink',teal:'icon-teal'};
+let curCat='tools';
+
+function renderCategory(id){
+curCat=id;const cat=categories[id];if(!cat)return;
+document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+const a=document.querySelector('.nav-item[data-category="'+id+'"]');if(a)a.classList.add('active');
+const m=document.getElementById('mainContent');let cards='';
+for(const t of cat.tools){
+const cc=cm[t.color]||'icon-purple',lc=t.locked?'tool-locked':'';
+const oc=t.toolPage?' onclick="openTool(\''+t.toolPage+'\')"':'';
+const ah=t.action?'<div><span class="tool-action '+lc+'"'+oc+'>'+t.action+'</span></div>':'';
+cards+='<div class="tool-card"><div class="tool-icon '+cc+'">'+t.icon+'</div><h3>'+t.name+'</h3><p>'+t.desc+'</p><span class="tool-tag">'+t.tag+'</span>'+ah+'</div>';
+}
+const sub=cat.subtitle?' <small>'+cat.subtitle+'</small>':'';
+m.innerHTML='<div class="top-bar"><h2>'+cat.icon+' '+cat.name+sub+'</h2></div><div class="grid">'+cards+'</div><div class="main-footer">© 2026 AI Xiaodou · Make AI work for you</div>';
+}
+
+const toolPages={
+'format-converter':{name:'🔄 Format Converter',html:`
+<div class="tool-row" style="flex-wrap:wrap;"><span style="font-size:14px;color:#666;">From</span>
+<select class="tool-select" id="fcFrom"><option value="json">JSON</option><option value="csv">CSV</option><option value="md">Markdown Table</option><option value="yaml">YAML</option><option value="url">URL Encode</option><option value="base64">Base64</option><option value="html">HTML Entity</option><option value="text">Plain Text</option></select>
+<span style="font-size:14px;color:#666;">To</span>
+<select class="tool-select" id="fcTo"><option value="csv">CSV</option><option value="json">JSON</option><option value="md">Markdown Table</option><option value="yaml">YAML</option><option value="url">URL Encode</option><option value="base64">Base64</option><option value="html">HTML Entity</option><option value="text">Plain Text</option></select>
+<button class="tool-btn" onclick="doFormatConvert()">Convert</button>
+<button class="tool-btn tool-btn-outline" onclick="swapFormatIO()">⇄ Swap</button>
+<button class="tool-btn tool-btn-outline" onclick="clearAll()">🗑️ Clear</button></div>
+<div class="tool-row" style="flex:1;gap:12px;align-items:stretch;">
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;"><span style="font-size:12px;color:#aaa;">Input</span><textarea class="tool-textarea" id="fcInput" placeholder="Paste input..." style="min-height:200px;flex:1;"></textarea></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;"><span style="font-size:12px;color:#aaa;">Output</span><textarea class="tool-textarea" id="fcOutput" placeholder="Result..." style="min-height:200px;flex:1;" readonly></textarea></div>
+</div>
+<div class="tool-row" style="margin-top:8px;"><button class="tool-btn tool-btn-outline" onclick="copyResult('fcOutput')">📋 Copy Result</button><span id="fcStatus" style="font-size:13px;color:#999;"></span><span id="fcHint" style="font-size:12px;color:#bbb;margin-left:auto;">💡 Select source and target formats, then click Convert</span></div>
+`},
+'data-cleaner':{name:'🔍 Data Cleaner',html:`
+<div class="tool-row" style="flex-wrap:wrap;gap:8px;">
+<button class="tool-btn" onclick="dcAction('dedup')">Dedup</button>
+<button class="tool-btn" onclick="dcAction('empty')">Remove Blanks</button>
+<button class="tool-btn" onclick="dcAction('trim')">Trim Spaces</button>
+<button class="tool-btn" onclick="dcAction('sort-asc')">Sort Asc</button>
+<button class="tool-btn" onclick="dcAction('sort-desc')">Sort Desc</button>
+<button class="tool-btn" onclick="dcAction('reverse')">Reverse</button>
+<button class="tool-btn" onclick="dcAction('shuffle')">Shuffle</button>
+<button class="tool-btn" onclick="dcAction('number')">Add Numbers</button>
+<span style="font-size:14px;color:#666;margin:0 4px;">Filter:</span>
+<input class="tool-select" id="dcFilter" placeholder="Keyword" style="padding:8px 12px;width:130px;" oninput="dcAction('filter')">
+<button class="tool-btn tool-btn-outline" onclick="clearAll()">🗑️ Clear</button>
+</div>
+<div class="tool-row" style="flex-wrap:wrap;gap:8px;">
+<span style="font-size:14px;color:#666;">Find &amp; Replace</span>
+<input class="tool-select" id="dcFind" placeholder="Find" style="padding:8px 12px;width:130px;">
+<span style="font-size:14px;color:#666;">→</span>
+<input class="tool-select" id="dcReplace" placeholder="Replace with" style="padding:8px 12px;width:130px;">
+<button class="tool-btn" onclick="dcAction('replace')">Replace</button>
+<button class="tool-btn tool-btn-outline" onclick="dcCount()">Count Lines</button>
+<span id="dcStats" style="font-size:13px;color:#999;"></span>
+</div>
+<div class="tool-row" style="flex:1;gap:12px;align-items:stretch;">
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;"><span style="font-size:12px;color:#aaa;">Input (one per line)</span><textarea class="tool-textarea" id="dcInput" placeholder="Paste text, one per line..." style="min-height:200px;flex:1;"></textarea></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;"><span style="font-size:12px;color:#aaa;">Output</span><textarea class="tool-textarea" id="dcOutput" placeholder="Cleaned result..." style="min-height:200px;flex:1;" readonly></textarea></div>
+</div>
+<div class="tool-row" style="margin-top:8px;"><button class="tool-btn tool-btn-outline" onclick="copyResult('dcOutput')">📋 Copy Result</button><span id="dcStatus" style="font-size:13px;color:#999;"></span></div>
+`},
+'note-tool':{name:'📝 Note Tool',html:`
+<div class="tool-row" style="flex-wrap:wrap;gap:8px;">
+<button class="tool-btn" onclick="saveNote()">💾 Save</button>
+<button class="tool-btn tool-btn-outline" onclick="exportNote()">📤 Export MD</button>
+<button class="tool-btn tool-btn-outline" onclick="clearNote()">🗑️ New</button>
+<span style="font-size:13px;color:#999;" id="noteStatus"></span>
+</div>
+<div class="tool-row" style="flex:1;gap:12px;align-items:stretch;">
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;"><span style="font-size:12px;color:#aaa;">Markdown</span><textarea class="tool-textarea" id="noteInput" placeholder="Enter Markdown..." style="min-height:250px;flex:1;font-family:monospace;" oninput="updateNotePreview()"></textarea></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;"><span style="font-size:12px;color:#aaa;">Preview</span><div id="notePreview" style="flex:1;min-height:250px;padding:14px;border-radius:12px;border:1px solid rgba(0,0,0,.08);background:rgba(255,255,255,.8);font-size:14px;line-height:1.7;overflow-y:auto;color:#333;"></div></div>
+</div>
+`}
+};
+
+function openTool(id){
+const p=toolPages[id];if(!p)return;
+const m=document.getElementById('mainContent');
+m.innerHTML='<div class="tool-page"><div class="tool-page-header"><span class="back-btn" onclick="renderCategory(\''+curCat+'\')">← Back</span><h3>'+p.name+'</h3></div><div class="tool-workspace">'+p.html+'</div><div class="main-footer">© 2026 AI Xiaodou · Make AI work for you</div></div>';
+}
+
+// ====== Format Converter ======
+function doFormatConvert(){
+const from=document.getElementById('fcFrom').value,to=document.getElementById('fcTo').value;
+const inp=document.getElementById('fcInput').value,out=document.getElementById('fcOutput'),st=document.getElementById('fcStatus');
+if(!inp.trim()){st.textContent='⚠️ Please enter content first';return}
+if(from===to){st.textContent='⚠️ Please select different formats';return}
+try{
+let r;
+if(from==='json'&&to==='csv')r=jsonToCsv(inp);
+else if(from==='csv'&&to==='json')r=csvToJson(inp);
+else if(from==='json'&&to==='md')r=jsonToMarkdown(inp);
+else if(from==='md'&&to==='json')r=markdownToJson(inp);
+else if(from==='csv'&&to==='md')r=csvToMarkdown(inp);
+else if(from==='md'&&to==='csv')r=markdownToCsv(inp);
+else if(from==='json'&&to==='yaml')r=jsonToYaml(inp);
+else if(from==='yaml'&&to==='json')r=yamlToJson(inp);
+else if(from==='text'&&to==='url')r=encodeURIComponent(inp);
+else if(from==='url'&&to==='text')r=decodeURIComponent(inp);
+else if(from==='text'&&to==='base64')r=btoa(unescape(encodeURIComponent(inp)));
+else if(from==='base64'&&to==='text')r=decodeURIComponent(escape(atob(inp)));
+else if(from==='text'&&to==='html')r=inp.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+else if(from==='html'&&to==='text')r=inp.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'");
+else if(from==='text'&&to==='csv')r=inp.split('\n').join(',');
+else if(from==='csv'&&to==='text')r=inp.replace(/,/g,'\n');
+else{st.textContent='⚠️ Not supported yet';return}
+out.value=r;st.textContent='✅ OK ('+r.length+' chars)';
+}catch(e){st.textContent='❌ '+e.message}
+}
+
+function swapFormatIO(){
+const f=document.getElementById('fcFrom'),t=document.getElementById('fcTo');
+[f.value,t.value]=[t.value,f.value];
+const i=document.getElementById('fcInput'),o=document.getElementById('fcOutput');
+[i.value,o.value]=[o.value,i.value];
+document.getElementById('fcStatus').textContent='';
+}
+
+function jsonToCsv(s){const d=JSON.parse(s);const a=Array.isArray(d)?d:[d];if(!a.length)throw Error('Empty data');const h=[...new Set(a.flatMap(Object.keys))];return h.join(',')+'\n'+a.map(r=>h.map(k=>{let v=r[k]??'';v=String(v).replace(/"/g,'""');if(v.includes(',')||v.includes('"')||v.includes('\n'))v='"'+v+'"';return v}).join(',')).join('\n')}
+function csvToJson(s){const l=s.trim().split('\n');if(l.length<2)throw Error('Need at least header + 1 data row');const h=l[0].split(',').map(x=>x.trim().replace(/^"|"$/g,''));const r=[];for(let i=1;i<l.length;i++){const v=_csv(l[i]);if(!v.length)continue;const o={};h.forEach((k,idx)=>o[k]=v[idx]??'');r.push(o)}return JSON.stringify(r,null,2)}
+function _csv(l){const r=[];let c='',q=false;for(let i=0;i<l.length;i++){const ch=l[i];if(q){if(ch==='"'&&i+1<l.length&&l[i+1]==='"'){c+='"';i++}else if(ch==='"')q=false;else c+=ch}else{if(ch==='"')q=true;else if(ch===','){r.push(c.trim());c=''}else c+=ch}}r.push(c.trim());return r}
+function csvToMarkdown(s){const l=s.trim().split('\n');if(l.length<2)throw Error('Need at least header + 1 data row');const r=l.map(x=>_csv(x));let m='| '+r[0].join(' | ')+' |\n';m+='| '+r[0].map(()=>'---').join(' | ')+' |\n';for(let i=1;i<r.length;i++)m+='| '+r[i].join(' | ')+' |\n';return m}
+function markdownToCsv(s){const l=s.split('\n').filter(x=>x.trim()&&!/^\|[\s-:]+\|$/.test(x.trim()));if(l.length<2)throw Error('Need at least header + 1 data row');return l.map(x=>{let s=x.trim();if(s.startsWith('|'))s=s.slice(1);if(s.endsWith('|'))s=s.slice(0,-1);return s.split('|').map(c=>c.trim()).join(',')}).join('\n')}
+function jsonToMarkdown(s){const d=JSON.parse(s);const a=Array.isArray(d)?d:[d];if(!a.length)throw Error('Empty data');const h=[...new Set(a.flatMap(Object.keys))];let m='| '+h.join(' | ')+' |\n';m+='| '+h.map(()=>'---').join(' | ')+' |\n';for(const r of a)m+='| '+h.map(k=>r[k]??'').join(' | ')+' |\n';return m}
+function markdownToJson(s){return csvToJson(markdownToCsv(s))}
+function jsonToYaml(s){const d=JSON.parse(s);const a=Array.isArray(d)?d:[d];return a.map(o=>Object.entries(o).map(([k,v])=>k+': '+(typeof v==='string'&&v.includes(' ')?'"'+v+'"':v)).join('\n')).join('\n---\n')}
+function yamlToJson(s){const d=s.trim().split('\n---\n').filter(x=>x.trim());const r=d.map(doc=>{const o={};doc.split('\n').forEach(l=>{const p=l.indexOf(':');if(p>0){let k=l.slice(0,p).trim();let v=l.slice(p+1).trim();if((v.startsWith('"')&&v.endsWith('"'))||(v.startsWith("'")&&v.endsWith("'")))v=v.slice(1,-1);o[k]=v}});return o});return JSON.stringify(r.length===1?r[0]:r,null,2)}
+
+// ====== Data Cleaner ======
+function dcAction(a){
+const inp=document.getElementById('dcInput'),out=document.getElementById('dcOutput');
+const st=document.getElementById('dcStats')||document.getElementById('dcStatus');
+let l=inp.value.split('\n');const tb=l.length;
+try{
+switch(a){
+case'dedup':l=[...new Set(l)];break;
+case'empty':l=l.filter(x=>x.trim());break;
+case'trim':l=l.map(x=>x.trim());break;
+case'sort-asc':l=l.sort((a,b)=>a.localeCompare(b));break;
+case'sort-desc':l=l.sort((a,b)=>b.localeCompare(a));break;
+case'reverse':l=l.reverse();break;
+case'shuffle':for(let i=l.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[l[i],l[j]]=[l[j],l[i]]}break;
+case'number':l=l.map((x,i)=>`${i+1}. ${x}`);break;
+case'filter':const kw=document.getElementById('dcFilter').value;if(!kw){st.textContent='⚠️ Enter keyword';return}l=l.filter(x=>x.includes(kw));break;
+case'replace':const f=document.getElementById('dcFind').value,r=document.getElementById('dcReplace').value;if(!f){st.textContent='⚠️ Enter search text';return}l=l.map(x=>x.split(f).join(r));break;
+}out.value=l.join('\n');if(st)st.textContent=`✅ ${tb} lines → ${l.length} lines`;
+}catch(e){if(st)st.textContent='❌ '+e.message}
+}
+function dcCount(){const i=document.getElementById('dcInput');const l=i.value?i.value.split('\n').filter(x=>x.trim()).length:0;document.getElementById('dcStats').textContent='📊 Total '+l+' lines'}
+
+// ====== Note Tool ======
+function updateNotePreview(){
+const inp=document.getElementById('noteInput').value;
+const prev=document.getElementById('notePreview');
+let html=inp.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+html=html.replace(/^### (.+)$/gm,'<h3>$1</h3>');
+html=html.replace(/^## (.+)$/gm,'<h2>$1</h2>');
+html=html.replace(/^# (.+)$/gm,'<h1>$1</h1>');
+html=html.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+html=html.replace(/\*(.+?)\*/g,'<em>$1</em>');
+html=html.replace(/`(.+?)`/g,'<code>$1</code>');
+html=html.replace(/^- (.+)$/gm,'<li>$1</li>');
+html=html.replace(/^(\d+)\. (.+)$/gm,'<li>$1. $2</li>');
+html=html.replace(/\n{2,}/g,'</p><p>');
+html=html.replace(/\n/g,'<br>');
+prev.innerHTML='<p>'+html+'</p>';
+}
+function saveNote(){
+const v=document.getElementById('noteInput').value;
+localStorage.setItem('ai-xiaodou-note',v);
+document.getElementById('noteStatus').textContent='✅ Saved locally';
+setTimeout(()=>{const s=document.getElementById('noteStatus');if(s)s.textContent=''},2000);
+}
+function exportNote(){
+const v=document.getElementById('noteInput').value;
+const b=new Blob([v],{type:'text/markdown'});
+const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='note.md';a.click();
+document.getElementById('noteStatus').textContent='✅ Exported';
+}
+function clearNote(){
+document.getElementById('noteInput').value='';document.getElementById('notePreview').innerHTML='';
+document.getElementById('noteStatus').textContent='🗑️ Cleared';
+localStorage.removeItem('ai-xiaodou-note');
+}
+
+function clearAll(){
+['dcInput','dcOutput','fcInput','fcOutput'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
+['dcStatus','fcStatus','dcStats'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=''});
+}
+
+function copyResult(id){
+const e=document.getElementById(id);
+navigator.clipboard.writeText(e.value).catch(()=>{e.select();document.execCommand('copy')});
+const s=document.getElementById('fcStatus')||document.getElementById('dcStatus');
+if(s)s.textContent='✅ Copied';
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+document.querySelectorAll('.nav-item').forEach(el=>{el.addEventListener('click',()=>{const c=el.dataset.category;if(c)renderCategory(c)})});
+renderCategory('tools');
+document.querySelectorAll('.side-tab').forEach(el=>{el.addEventListener('click',()=>switchTab(el.dataset.tab))});
+document.querySelectorAll('.article-nav-item').forEach(el=>{el.addEventListener('click',()=>{document.querySelectorAll('.article-nav-item').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderArticleList(el.dataset.cat)})});
+});
+
+function switchTab(tab){
+document.querySelectorAll('.side-tab').forEach(el=>el.classList.toggle('active',el.dataset.tab===tab));
+const isTools=tab==='tools';
+document.getElementById('toolsNav').style.display=isTools?'':'none';
+document.getElementById('articlesNav').style.display=isTools?'none':'';
+document.getElementById('mainContent').style.display=isTools?'':'none';
+document.getElementById('articleContent').style.display=isTools?'none':'';
+if(!isTools&&!window._articlesLoaded){loadArticles()}
+}
+
+let articlesData=[];
+const catNames={'ai-research':'AI-Assisted Research',prompt:'Prompt Sharing'};
+
+async function loadArticles(){
+try{
+const res=await fetch('articles/list.json',{cache:'no-store'});
+if(!res.ok)throw new Error();
+articlesData=await res.json();
+window._articlesLoaded=true;
+renderArticleList('all');
+}catch(e){
+articlesData=[
+{file:'04-descriptive-statistics.md',title:'Descriptive Statistics: Let AI Help You Write Publication-Ready Descriptive Statistics Tables',summary:'Complete workflow from raw data to publication-ready Table 1: AI-generated code, troubleshooting four common pitfalls, interpreting three real-world cases.',category:'ai-research',stage:'Data Analysis Stage',date:'2026-05-26'}
+];
+window._articlesLoaded=true;
+renderArticleList('all');
+}
+}
+
+function renderArticleList(cat){
+const list=cat==='all'?articlesData:articlesData.filter(a=>a.category===cat);
+const main=document.getElementById('articleContent');
+if(!list.length){main.innerHTML='<div style="padding:40px;text-align:center;color:#999">No articles in this category</div>';return}
+const title=cat==='all'?'All Articles':catNames[cat]||'Articles';
+const stages={};
+list.forEach(a=>{const s=a.stage||'Other';if(!stages[s])stages[s]=[];stages[s].push(a)});
+let html=`<div class="header"><h1>${title}</h1><p>${list.length} articles total</p></div>`;
+Object.keys(stages).forEach(s=>{
+html+=`<div class="stage-label">${s}</div><div class="grid">${stages[s].map(a=>`<div class="article-card" onclick="openArticle('${a.file}')"><h3>${a.title}</h3><p>${a.summary||''}</p><div class="article-meta"><span>📅 ${a.date||''}</span></div></div>`).join('')}</div>`;
+});
+main.innerHTML=html;
+}
+
+async function openArticle(file){
+const main=document.getElementById('articleContent');
+main.innerHTML='<div style="padding:40px;text-align:center;color:#999">Loading…</div>';
+let md='';
+try{
+const res=await fetch('articles/'+file,{cache:'no-store'});
+if(!res.ok)throw new Error();
+md=await res.text();
+}catch(e){
+const embedded={
+'04-descriptive-statistics.md':"# Descriptive Statistics: Let AI Help You Write Publication-Ready Descriptive Statistics Tables\n\nWhen a reviewer opens your paper, what's the first thing they look at?\n\nNot the regression results, not the robustness checks — it's **Table 1**, the descriptive statistics table.\n\nThis table tells readers: what your data looks like, whether your sample is reasonable, and if there are any issues with your variables. If Table 1 doesn't pass muster, no one will trust the regressions that follow, no matter how pretty they are.\n\nHonestly, doing descriptive statistics isn't hard. What's hard is doing it **right, doing it completely, and doing it to publication standards**. Should variables be logged? How do you handle outliers? How should categorical variables be presented? These are all details — but details determine a paper's first impression.\n\nToday I'm sharing an AI-assisted workflow for descriptive statistics, taking you step by step from raw data to a publication-ready Table 1.\n\n## What a Publication-Ready Descriptive Statistics Table Looks Like\n\nFirst, let's look at the target. Table 1 in top economics and management journals typically includes the following columns:\n\n| Column | Description | Necessity |\n|---|---|---|\n| Variable Name | Bilingual, logically grouped | Required |\n| N | Number of observations (non-missing) | Required |\n| Mean | Mean | Required |\n| SD | Standard deviation | Required |\n| Min | Minimum | Required |\n| Max | Maximum | Required |\n| P25 / Median / P75 | Percentiles | Recommended |\n| Skew / Kurt | Skewness / Kurtosis | Optional |\n\n**Key rule**: Variables should be arranged by logical grouping — dependent variable → key independent variable → control variables → instrumental variables — not alphabetically.\n\n## AI Generates Descriptive Statistics Code in One Step\n\nJust give it this prompt, copy and use:\n\n> I have a Stata dataset with the following variables:\n> - Dependent variable: ln_wage (log wage)\n> - Key independent variables: edu_year (years of education), train (training participation, 0/1)\n> - Control variables: age (age), gender (gender, 0/1), experience (years of experience), firm_size (firm size)\n> - Data characteristics: Panel data, firm-year\n>\n> Please generate Stata code that:\n> 1. Outputs a three-line table format descriptive statistics table\n> 2. Groups variables as "dependent → key independent → control" with a blank line between groups\n> 3. Includes N, Mean, SD, Min, Max, P50\n> 4. Uses esttab to export to Word\n> 5. Also checks for extreme values needing Winsorization\n\nThe AI will give you a complete block of Stata code, roughly looking like this:\n\n```stata\n* Variable labels\nlabel var ln_wage \"Log Wage\"\nlabel var edu_year \"Years of Education\"\nlabel var train \"Training Participation\"\nlabel var age \"Age\"\nlabel var gender \"Gender\"\nlabel var experience \"Years of Experience\"\nlabel var firm_size \"Firm Size\"\n\n* Define variable groups\nglobal depvar \"ln_wage\"\nglobal keyvar \"edu_year train\"\nglobal ctrlvar \"age gender experience firm_size\"\n\n* Descriptive statistics\nestpost summarize ${depvar} ${keyvar} ${ctrlvar}, detail\nesttab using \"desc_stats.rtf\", ///\n    cells(\"count(fmt(%9.0fc)) mean(fmt(%9.3f)) sd(fmt(%9.3f)) min(fmt(%9.3f)) p50(fmt(%9.3f)) max(fmt(%9.3f))\") ///\n    noobs nonumber nomtitle title(\"Descriptive Statistics\") replace\n```\n\nNote: **Always run AI-generated code yourself to verify**. Variable names, labels, and grouping order — these small things are easy to get wrong.\n\n## Four Common Pitfalls, AI Helps You Troubleshoot Automatically\n\n### Pitfall 1: Large Differences in Variable Scales\n\nIf your descriptive statistics table shows one variable with a mean of 0.3 and another with a mean of 85,000 — putting them together adds no information and affects coefficient interpretation in regressions.\n\n**AI Suggestion**: Take the natural log of large-value variables (e.g., `ln_asset = ln(asset)`) or standardize (`x_std = (x - mean) / sd`).\n\n### Pitfall 2: Outliers Squeezing Summary Statistics\n\nMean corporate assets 8 billion, median 500 million — a classic right-skewed distribution where a few giants inflate the mean.\n\n**AI Suggestion**: Apply 1% or 5% two-sided Winsorization to continuous variables:\n\n```stata\nwinsor2 asset, cuts(1 99) replace\n```\n\n### Pitfall 3: Zero or Negative Values Affecting Log Transformation\n\n`ln(x)` requires x > 0. If variables contain zeros (e.g., many firms have zero R&D expenditure), taking logs directly will drop those observations.\n\n**AI Suggestion**: Use `ln(x+1)` or `asinh(x)` (inverse hyperbolic sine transformation), which is zero-friendly and approximates log.\n\n### Pitfall 4: Treating Categorical Variables as Continuous\n\nVariables like gender (0/1) or industry code (1-18) — computing means and standard deviations for these is meaningless.\n\n**AI Suggestion**: For 0/1 variables, report only frequency (mean equals proportion). For multi-category variables, create a separate frequency distribution table.\n\n## AI Interprets Descriptive Statistics: Three Real-World Cases\n\n### Case A: Large Firm Bias\n\n```\nVariable        N     Mean      SD      Min     P50      Max\nTotal Assets  5,320   8.02B   21.0B   0.03B   0.51B   320B\n```\n\nMean 8.02B vs. median 0.51B — a 16x difference. The sample is severely right-skewed, with a few large firms driving the mean. A reviewer seeing this will ask: **Are your regression results driven by large firms?** You'll need subsample regressions or Winsorization.\n\n### Case B: Insufficient Variation\n\n```\nVariable        N     Mean     SD     Min    Max\nIndustry HHI  2,100   0.03   0.01   0.01  0.05\n```\n\nA standard deviation of just 0.01 — the variable has almost no variation. Using this as a key independent variable, the regression coefficient will almost certainly be insignificant — not because there's no effect, but because the data shows no variation. **Either change the variable or change the sample.**\n\n### Case C: Data Entry Errors\n\n```\nVariable    N     Mean      SD      Min     Max\nAge      3,800    35.2     12.8     18     999\n```\n\nA maximum value of 999 is clearly a missing value code. In Stata, replace with `.`:\n\n```stata\nreplace age = . if age > 100\n```\n\nAI can easily catch these issues for you — prompt: **"Please check the following descriptive statistics and identify possible outliers and data entry errors."**\n\n## One-Click Workflow: From Raw Data to Publication-Ready Table 1\n\nStringing the steps together:\n\n**Step 1**: Raw data → Let AI check variable types, distinguishing continuous/categorical/0-1\n\n**Step 2**: AI provides Winsorization / log transformation / variable conversion suggestions\n\n**Step 3**: AI generates Stata/R code for one-click descriptive statistics output\n\n**Step 4**: Paste results back to AI and let it interpret — find outliers, right-skewed distributions, insufficient variation\n\n**Step 5**: AI writes a paragraph for your paper's "Data and Variables" section:\n\n> Table 1 reports descriptive statistics for the main variables. The sample firms have an average log wage of 10.83 (approximately 51,000 yuan), with a standard deviation of 0.76, indicating substantial wage variation. The mean years of education is 14.2 years, and approximately 35% of the sample participated in vocational training...\n\n## Quick Reference Tools\n\n| Tool | Use | Command/Package |\n|------|-----|-----------------|\n| Stata | Export three-line table | `esttab`, `outreg2` |\n| Stata | Winsorize | `winsor2` |\n| R | Descriptive stats table | `gtsummary::tbl_summary()`, `modelsummary::datasummary()` |\n| Python | Quick statistics | `df.describe()` + `tabulate` |\n| AI | Generate code + interpret | DeepSeek / GPT-4o |\n\n---\n\nDescriptive statistics is not just a formality — it's your first conversation with the reviewer. Use AI to get this table right, complete, and thorough, and the analysis that follows will carry real persuasive power.\n\nNext time we'll discuss **data cleaning**: AI workflows for handling missing values, outliers, and duplicate samples.\n"
+};
+md=embedded[file]||'';
+}
+const meta=articlesData.find(a=>a.file===file)||{};
+main.innerHTML=`<div class="article-detail"><div class="article-inner"><div style="margin-bottom:16px"><a onclick="renderArticleList(document.querySelector('.article-nav-item.active').dataset.cat)" style="color:#1a1a2e;cursor:pointer;font-size:14px">← Back to List</a></div><h1>${meta.title||''}</h1><div class="article-meta"><span>📅 ${meta.date||''}</span><span>🏷️ ${catNames[meta.category]||''}</span></div><div class="article-body">${mdToHtml(md)}</div></div></div>`;
+addCopyButtons();
+}
+
+function mdToHtml(md){
+let h=md.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+h=h.replace(/```([\s\S]*?)```/g,(m,c)=>'<div class="code-wrap"><pre><code>'+c.trim()+'</code></pre></div>');
+h=h.replace(/^---$/gm,'<hr>');
+h=h.replace(/^### (.+)$/gm,'<h3>$1</h3>');
+h=h.replace(/^## (.+)$/gm,'<h2>$1</h2>');
+h=h.replace(/^# (.+)$/gm,'<h1>$1</h1>');
+h=h.replace(/^&gt; (.+)$/gm,'<blockquote><p>$1</p></blockquote>');
+h=h.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+h=h.replace(/\*(.+?)\*/g,'<em>$1</em>');
+h=h.replace(/`([^`]+)`/g,'<code>$1</code>');
+h=h.replace(/\[(.+?)\]\((.+?)\)/g,'<a href="$2" target="_blank">$1</a>');
+h=h.replace(/^- (.+)$/gm,'<li>$1</li>');
+h=h.replace(/(<li>.*<\/li>\n?)+/g,m=>'<ul>'+m+'</ul>');
+h=h.replace(/^(\d+)\. (.+)$/gm,'<oli>$2</oli>');
+h=h.replace(/(<oli>.*<\/oli>\n?)+/g,m=>'<ol>'+m.replace(/<\/?oli>/g,t=>t.replace('oli','li'))+'</ol>');
+const lines=h.split('\n');let out=[];let i=0;
+while(i<lines.length){
+if(lines[i].match(/^\|.+\|$/)){
+let rows=[];while(i<lines.length&&lines[i].match(/^\|/)){rows.push(lines[i]);i++}
+let html='<table>';let inBody=false;
+rows.forEach((r,ri)=>{
+let cells=r.split('|').filter(c=>c.trim()!=='').map(c=>c.trim());
+if(cells.some(c=>c.match(/^[-:]+$/))){html+='</thead><tbody>';inBody=true;return}
+if(ri===0)html+='<thead>';
+let tag=inBody?'td':'th';
+html+='<tr>'+cells.map(c=>'<'+tag+'>'+c+'</'+tag+'>').join('')+'</tr>';
+});html+='</tbody></table>';out.push(html);
+}else{out.push(lines[i]);i++}
+}
+h=out.join('\n');
+h=h.split(/\n{2,}/).map(p=>{
+if(p.match(/^<(h\d|ul|ol|pre|blockquote|table|hr|div)/))return p;
+return p.trim()?'<p>'+p.replace(/\n/g,'<br>')+'</p>':'';
+}).join('');
+h=h.replace(/<\/blockquote>\s*<blockquote>/g,'<br>');
+return h;
+}
+
+function addCopyButtons(){
+document.querySelectorAll('.code-wrap').forEach(w=>{
+const btn=document.createElement('button');btn.className='copy-btn';btn.textContent='Copy';
+btn.onclick=()=>{const code=w.querySelector('code');
+navigator.clipboard.writeText(code.textContent).then(()=>{btn.textContent='Copied';btn.classList.add('copied');setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied')},1500)});
+};w.appendChild(btn)});
+}
+
+function openModal(type){
+const modal=document.getElementById('infoModal');
+const body=document.getElementById('modalBody');
+if(type==='about'){
+body.innerHTML='<h2>📕 About AI Xiaodou</h2><p>AI Xiaodou is a collection of tools focused on <strong>academic research and productivity</strong>, making AI truly work for you.</p><div class="modal-item"><div class="mi-icon">🫘</div><div class="mi-text">Academic-focused tools<small>Literature search · Data analysis · Format conversion</small></div></div><div class="modal-item"><div class="mi-icon">🌟</div><div class="mi-text">Continuously iterating<small>Auto literature review generation, deep StataMCP integration, more online tools</small></div></div>';
+}else if(type==='contact'){
+body.innerHTML='<h2>✉️ Contact Me</h2><div class="modal-item"><div class="mi-icon">💬</div><div class="mi-text">QQ Group: 812419882<small>Join the community for updates and help</small></div></div><div class="modal-item"><div class="mi-icon">📰</div><div class="mi-text">WeChat Official Account: AI Xiaodou<small>Follow for latest article updates</small></div></div>';
+}
+modal.style.display='flex';
+}
+
+function closeModal(){
+document.getElementById('infoModal').style.display='none';
+}
+
+async function openSearch(){
+if(!window._articlesLoaded)await loadArticles();
+const ov=document.getElementById('searchOverlay');
+ov.style.display='flex';
+const inp=document.getElementById('searchInput');
+inp.value='';inp.focus();
+renderSearchResults('');
+}
+
+function renderSearchResults(q){
+const box=document.getElementById('searchResults');
+const kw=q.trim().toLowerCase();
+const list=kw?articlesData.filter(a=>(a.title+' '+(a.summary||'')).toLowerCase().includes(kw)):articlesData;
+if(!list.length){box.innerHTML='<div style="padding:24px;text-align:center;color:#bbb;font-size:13px">No matching articles</div>';return}
+box.innerHTML=list.map(a=>`<div class="search-item" onclick="pickSearch('${a.file}')"><h4>${a.title}</h4><p>${(a.summary||'').slice(0,60)}</p></div>`).join('');
+}
+
+function pickSearch(file){
+document.getElementById('searchOverlay').style.display='none';
+switchTab('articles');
+setTimeout(()=>openArticle(file),50);
+}
+
+document.addEventListener('click',e=>{
+const ov=document.getElementById('searchOverlay');
+if(e.target===ov)ov.style.display='none';
+});
+document.addEventListener('keydown',e=>{
+if(e.key==='Escape'){const ov=document.getElementById('searchOverlay');if(ov)ov.style.display='none';const ml=document.getElementById('infoModal');if(ml)ml.style.display='none'}
+});
+document.addEventListener('input',e=>{
+if(e.target.id==='searchInput')renderSearchResults(e.target.value);
+});
+</script>
+</body>
+</html>
