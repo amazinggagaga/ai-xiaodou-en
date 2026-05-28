@@ -134,16 +134,7 @@ input.tool-select{font-size:14px;font-family:monospace}
 <div class="glass-card">
 <div class="sidebar">
 <div class="sidebar-logo"><div class="logo-icon">Dou</div><span class="logo-text">AI Xiaodou</span></div>
-<div class="side-tabs">
-<div class="side-tab active" data-tab="tools">🛠️ Tools</div>
-<div class="side-tab" data-tab="articles">📝 Articles</div>
-</div>
-<ul class="nav-list" id="toolsNav">
-<li class="nav-item" data-category="literature"><span class="icon">📚</span> Literature Search <span class="badge">3</span></li>
-<li class="nav-item active" data-category="tools"><span class="icon">🛠️</span> Productivity Tools <span class="badge">3</span></li>
-<li class="nav-item" data-category="data"><span class="icon">📊</span> Data Analysis <span class="badge">2</span></li>
-</ul>
-<div id="articlesNav" style="display:none">
+<div id="articlesNav">
 <div class="article-nav-item active" data-cat="all"><span class="icon">📚</span> All Articles</div>
 <div class="article-nav-item" data-cat="ai-research"><span class="icon">🤖</span> AI-Assisted Research</div>
 <div class="article-nav-item" data-cat="prompt"><span class="icon">💡</span> Prompt Sharing</div>
@@ -153,8 +144,7 @@ input.tool-select{font-size:14px;font-family:monospace}
 <a onclick="openModal('contact')">✉️ Contact Me</a>
 </div>
 </div>
-<div class="main" id="mainContent"></div>
-<div class="main" id="articleContent" style="display:none"></div>
+<div class="main" id="articleContent"></div>
 <div id="searchOverlay" style="display:none">
 <div class="search-box">
 <input type="text" id="searchInput" placeholder="Search articles…" autocomplete="off">
@@ -171,233 +161,10 @@ input.tool-select{font-size:14px;font-family:monospace}
 <button class="search-btn" onclick="openSearch()">🔍</button>
 </div>
 <script>
-const categories={
-literature:{name:'Literature Search',subtitle:'3 tools',icon:'📚',tools:[
-{icon:'📖',color:'purple',name:'Literature Search Assistant',desc:'Chinese arguments → Keyword extraction → Semantic Scholar/Crossref search → Sentence verification → One-click Zotero import',tag:'Coming Soon'},
-{icon:'📑',color:'blue',name:'Batch Literature Scanner',desc:'Batch topic search, LLM full-text paragraph scoring, review HTML report generation',tag:'Coming Soon'},
-{icon:'📋',color:'green',name:'Citation Verification Report',desc:'Auto-generate HTML verification report with source matching, DOI, and confidence scores',tag:'Coming Soon'}]},
-tools:{name:'Productivity Tools',subtitle:'3 tools',icon:'🛠️',tools:[
-{icon:'🔄',color:'blue',name:'Format Converter',desc:'15 format conversions: JSON/CSV/Markdown/YAML/Base64/URL, etc.',tag:'Online Tool',action:'Use →',toolPage:'format-converter'},
-{icon:'🔍',color:'green',name:'Data Cleaner',desc:'Deduplicate, remove blanks, sort, filter, find & replace, add line numbers',tag:'Online Tool',action:'Use →',toolPage:'data-cleaner'},
-{icon:'📝',color:'purple',name:'Note Tool',desc:'Markdown live preview, local auto-save, one-click export',tag:'Online Tool',action:'Use →',toolPage:'note-tool'}]},
-data:{name:'Data Analysis',subtitle:'2 tools',icon:'📊',tools:[
-{icon:'📈',color:'teal',name:'Survey Data Analysis',desc:'Auto-read Excel surveys, frequency stats, Likert scale conversion',tag:'Coming Soon'},
-{icon:'🧮',color:'pink',name:'Empirical Analysis Assistant',desc:'DID/PSM-DID/IV econometric model prompt generator',tag:'Coming Soon'}]}
-};
-const cm={purple:'icon-purple',blue:'icon-blue',green:'icon-green',orange:'icon-orange',pink:'icon-pink',teal:'icon-teal'};
-let curCat='tools';
-
-function renderCategory(id){
-curCat=id;const cat=categories[id];if(!cat)return;
-document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
-const a=document.querySelector('.nav-item[data-category="'+id+'"]');if(a)a.classList.add('active');
-const m=document.getElementById('mainContent');let cards='';
-for(const t of cat.tools){
-const cc=cm[t.color]||'icon-purple',lc=t.locked?'tool-locked':'';
-const oc=t.toolPage?' onclick="openTool(\''+t.toolPage+'\')"':'';
-const ah=t.action?'<div><span class="tool-action '+lc+'"'+oc+'>'+t.action+'</span></div>':'';
-cards+='<div class="tool-card"><div class="tool-icon '+cc+'">'+t.icon+'</div><h3>'+t.name+'</h3><p>'+t.desc+'</p><span class="tool-tag">'+t.tag+'</span>'+ah+'</div>';
-}
-const sub=cat.subtitle?' <small>'+cat.subtitle+'</small>':'';
-m.innerHTML='<div class="top-bar"><h2>'+cat.icon+' '+cat.name+sub+'</h2></div><div class="grid">'+cards+'</div><div class="main-footer">© 2026 AI Xiaodou · Make AI work for you</div>';
-}
-
-const toolPages={
-'format-converter':{name:'🔄 Format Converter',html:`
-<div class="tool-row" style="flex-wrap:wrap;"><span style="font-size:14px;color:#666;">From</span>
-<select class="tool-select" id="fcFrom"><option value="json">JSON</option><option value="csv">CSV</option><option value="md">Markdown Table</option><option value="yaml">YAML</option><option value="url">URL Encode</option><option value="base64">Base64</option><option value="html">HTML Entity</option><option value="text">Plain Text</option></select>
-<span style="font-size:14px;color:#666;">To</span>
-<select class="tool-select" id="fcTo"><option value="csv">CSV</option><option value="json">JSON</option><option value="md">Markdown Table</option><option value="yaml">YAML</option><option value="url">URL Encode</option><option value="base64">Base64</option><option value="html">HTML Entity</option><option value="text">Plain Text</option></select>
-<button class="tool-btn" onclick="doFormatConvert()">Convert</button>
-<button class="tool-btn tool-btn-outline" onclick="swapFormatIO()">⇄ Swap</button>
-<button class="tool-btn tool-btn-outline" onclick="clearAll()">🗑️ Clear</button></div>
-<div class="tool-row" style="flex:1;gap:12px;align-items:stretch;">
-<div style="flex:1;display:flex;flex-direction:column;gap:6px;"><span style="font-size:12px;color:#aaa;">Input</span><textarea class="tool-textarea" id="fcInput" placeholder="Paste input..." style="min-height:200px;flex:1;"></textarea></div>
-<div style="flex:1;display:flex;flex-direction:column;gap:6px;"><span style="font-size:12px;color:#aaa;">Output</span><textarea class="tool-textarea" id="fcOutput" placeholder="Result..." style="min-height:200px;flex:1;" readonly></textarea></div>
-</div>
-<div class="tool-row" style="margin-top:8px;"><button class="tool-btn tool-btn-outline" onclick="copyResult('fcOutput')">📋 Copy Result</button><span id="fcStatus" style="font-size:13px;color:#999;"></span><span id="fcHint" style="font-size:12px;color:#bbb;margin-left:auto;">💡 Select source and target formats, then click Convert</span></div>
-`},
-'data-cleaner':{name:'🔍 Data Cleaner',html:`
-<div class="tool-row" style="flex-wrap:wrap;gap:8px;">
-<button class="tool-btn" onclick="dcAction('dedup')">Dedup</button>
-<button class="tool-btn" onclick="dcAction('empty')">Remove Blanks</button>
-<button class="tool-btn" onclick="dcAction('trim')">Trim Spaces</button>
-<button class="tool-btn" onclick="dcAction('sort-asc')">Sort Asc</button>
-<button class="tool-btn" onclick="dcAction('sort-desc')">Sort Desc</button>
-<button class="tool-btn" onclick="dcAction('reverse')">Reverse</button>
-<button class="tool-btn" onclick="dcAction('shuffle')">Shuffle</button>
-<button class="tool-btn" onclick="dcAction('number')">Add Numbers</button>
-<span style="font-size:14px;color:#666;margin:0 4px;">Filter:</span>
-<input class="tool-select" id="dcFilter" placeholder="Keyword" style="padding:8px 12px;width:130px;" oninput="dcAction('filter')">
-<button class="tool-btn tool-btn-outline" onclick="clearAll()">🗑️ Clear</button>
-</div>
-<div class="tool-row" style="flex-wrap:wrap;gap:8px;">
-<span style="font-size:14px;color:#666;">Find &amp; Replace</span>
-<input class="tool-select" id="dcFind" placeholder="Find" style="padding:8px 12px;width:130px;">
-<span style="font-size:14px;color:#666;">→</span>
-<input class="tool-select" id="dcReplace" placeholder="Replace with" style="padding:8px 12px;width:130px;">
-<button class="tool-btn" onclick="dcAction('replace')">Replace</button>
-<button class="tool-btn tool-btn-outline" onclick="dcCount()">Count Lines</button>
-<span id="dcStats" style="font-size:13px;color:#999;"></span>
-</div>
-<div class="tool-row" style="flex:1;gap:12px;align-items:stretch;">
-<div style="flex:1;display:flex;flex-direction:column;gap:6px;"><span style="font-size:12px;color:#aaa;">Input (one per line)</span><textarea class="tool-textarea" id="dcInput" placeholder="Paste text, one per line..." style="min-height:200px;flex:1;"></textarea></div>
-<div style="flex:1;display:flex;flex-direction:column;gap:6px;"><span style="font-size:12px;color:#aaa;">Output</span><textarea class="tool-textarea" id="dcOutput" placeholder="Cleaned result..." style="min-height:200px;flex:1;" readonly></textarea></div>
-</div>
-<div class="tool-row" style="margin-top:8px;"><button class="tool-btn tool-btn-outline" onclick="copyResult('dcOutput')">📋 Copy Result</button><span id="dcStatus" style="font-size:13px;color:#999;"></span></div>
-`},
-'note-tool':{name:'📝 Note Tool',html:`
-<div class="tool-row" style="flex-wrap:wrap;gap:8px;">
-<button class="tool-btn" onclick="saveNote()">💾 Save</button>
-<button class="tool-btn tool-btn-outline" onclick="exportNote()">📤 Export MD</button>
-<button class="tool-btn tool-btn-outline" onclick="clearNote()">🗑️ New</button>
-<span style="font-size:13px;color:#999;" id="noteStatus"></span>
-</div>
-<div class="tool-row" style="flex:1;gap:12px;align-items:stretch;">
-<div style="flex:1;display:flex;flex-direction:column;gap:6px;"><span style="font-size:12px;color:#aaa;">Markdown</span><textarea class="tool-textarea" id="noteInput" placeholder="Enter Markdown..." style="min-height:250px;flex:1;font-family:monospace;" oninput="updateNotePreview()"></textarea></div>
-<div style="flex:1;display:flex;flex-direction:column;gap:6px;"><span style="font-size:12px;color:#aaa;">Preview</span><div id="notePreview" style="flex:1;min-height:250px;padding:14px;border-radius:12px;border:1px solid rgba(0,0,0,.08);background:rgba(255,255,255,.8);font-size:14px;line-height:1.7;overflow-y:auto;color:#333;"></div></div>
-</div>
-`}
-};
-
-function openTool(id){
-const p=toolPages[id];if(!p)return;
-const m=document.getElementById('mainContent');
-m.innerHTML='<div class="tool-page"><div class="tool-page-header"><span class="back-btn" onclick="renderCategory(\''+curCat+'\')">← Back</span><h3>'+p.name+'</h3></div><div class="tool-workspace">'+p.html+'</div><div class="main-footer">© 2026 AI Xiaodou · Make AI work for you</div></div>';
-}
-
-// ====== Format Converter ======
-function doFormatConvert(){
-const from=document.getElementById('fcFrom').value,to=document.getElementById('fcTo').value;
-const inp=document.getElementById('fcInput').value,out=document.getElementById('fcOutput'),st=document.getElementById('fcStatus');
-if(!inp.trim()){st.textContent='⚠️ Please enter content first';return}
-if(from===to){st.textContent='⚠️ Please select different formats';return}
-try{
-let r;
-if(from==='json'&&to==='csv')r=jsonToCsv(inp);
-else if(from==='csv'&&to==='json')r=csvToJson(inp);
-else if(from==='json'&&to==='md')r=jsonToMarkdown(inp);
-else if(from==='md'&&to==='json')r=markdownToJson(inp);
-else if(from==='csv'&&to==='md')r=csvToMarkdown(inp);
-else if(from==='md'&&to==='csv')r=markdownToCsv(inp);
-else if(from==='json'&&to==='yaml')r=jsonToYaml(inp);
-else if(from==='yaml'&&to==='json')r=yamlToJson(inp);
-else if(from==='text'&&to==='url')r=encodeURIComponent(inp);
-else if(from==='url'&&to==='text')r=decodeURIComponent(inp);
-else if(from==='text'&&to==='base64')r=btoa(unescape(encodeURIComponent(inp)));
-else if(from==='base64'&&to==='text')r=decodeURIComponent(escape(atob(inp)));
-else if(from==='text'&&to==='html')r=inp.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-else if(from==='html'&&to==='text')r=inp.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'");
-else if(from==='text'&&to==='csv')r=inp.split('\n').join(',');
-else if(from==='csv'&&to==='text')r=inp.replace(/,/g,'\n');
-else{st.textContent='⚠️ Not supported yet';return}
-out.value=r;st.textContent='✅ OK ('+r.length+' chars)';
-}catch(e){st.textContent='❌ '+e.message}
-}
-
-function swapFormatIO(){
-const f=document.getElementById('fcFrom'),t=document.getElementById('fcTo');
-[f.value,t.value]=[t.value,f.value];
-const i=document.getElementById('fcInput'),o=document.getElementById('fcOutput');
-[i.value,o.value]=[o.value,i.value];
-document.getElementById('fcStatus').textContent='';
-}
-
-function jsonToCsv(s){const d=JSON.parse(s);const a=Array.isArray(d)?d:[d];if(!a.length)throw Error('Empty data');const h=[...new Set(a.flatMap(Object.keys))];return h.join(',')+'\n'+a.map(r=>h.map(k=>{let v=r[k]??'';v=String(v).replace(/"/g,'""');if(v.includes(',')||v.includes('"')||v.includes('\n'))v='"'+v+'"';return v}).join(',')).join('\n')}
-function csvToJson(s){const l=s.trim().split('\n');if(l.length<2)throw Error('Need at least header + 1 data row');const h=l[0].split(',').map(x=>x.trim().replace(/^"|"$/g,''));const r=[];for(let i=1;i<l.length;i++){const v=_csv(l[i]);if(!v.length)continue;const o={};h.forEach((k,idx)=>o[k]=v[idx]??'');r.push(o)}return JSON.stringify(r,null,2)}
-function _csv(l){const r=[];let c='',q=false;for(let i=0;i<l.length;i++){const ch=l[i];if(q){if(ch==='"'&&i+1<l.length&&l[i+1]==='"'){c+='"';i++}else if(ch==='"')q=false;else c+=ch}else{if(ch==='"')q=true;else if(ch===','){r.push(c.trim());c=''}else c+=ch}}r.push(c.trim());return r}
-function csvToMarkdown(s){const l=s.trim().split('\n');if(l.length<2)throw Error('Need at least header + 1 data row');const r=l.map(x=>_csv(x));let m='| '+r[0].join(' | ')+' |\n';m+='| '+r[0].map(()=>'---').join(' | ')+' |\n';for(let i=1;i<r.length;i++)m+='| '+r[i].join(' | ')+' |\n';return m}
-function markdownToCsv(s){const l=s.split('\n').filter(x=>x.trim()&&!/^\|[\s-:]+\|$/.test(x.trim()));if(l.length<2)throw Error('Need at least header + 1 data row');return l.map(x=>{let s=x.trim();if(s.startsWith('|'))s=s.slice(1);if(s.endsWith('|'))s=s.slice(0,-1);return s.split('|').map(c=>c.trim()).join(',')}).join('\n')}
-function jsonToMarkdown(s){const d=JSON.parse(s);const a=Array.isArray(d)?d:[d];if(!a.length)throw Error('Empty data');const h=[...new Set(a.flatMap(Object.keys))];let m='| '+h.join(' | ')+' |\n';m+='| '+h.map(()=>'---').join(' | ')+' |\n';for(const r of a)m+='| '+h.map(k=>r[k]??'').join(' | ')+' |\n';return m}
-function markdownToJson(s){return csvToJson(markdownToCsv(s))}
-function jsonToYaml(s){const d=JSON.parse(s);const a=Array.isArray(d)?d:[d];return a.map(o=>Object.entries(o).map(([k,v])=>k+': '+(typeof v==='string'&&v.includes(' ')?'"'+v+'"':v)).join('\n')).join('\n---\n')}
-function yamlToJson(s){const d=s.trim().split('\n---\n').filter(x=>x.trim());const r=d.map(doc=>{const o={};doc.split('\n').forEach(l=>{const p=l.indexOf(':');if(p>0){let k=l.slice(0,p).trim();let v=l.slice(p+1).trim();if((v.startsWith('"')&&v.endsWith('"'))||(v.startsWith("'")&&v.endsWith("'")))v=v.slice(1,-1);o[k]=v}});return o});return JSON.stringify(r.length===1?r[0]:r,null,2)}
-
-// ====== Data Cleaner ======
-function dcAction(a){
-const inp=document.getElementById('dcInput'),out=document.getElementById('dcOutput');
-const st=document.getElementById('dcStats')||document.getElementById('dcStatus');
-let l=inp.value.split('\n');const tb=l.length;
-try{
-switch(a){
-case'dedup':l=[...new Set(l)];break;
-case'empty':l=l.filter(x=>x.trim());break;
-case'trim':l=l.map(x=>x.trim());break;
-case'sort-asc':l=l.sort((a,b)=>a.localeCompare(b));break;
-case'sort-desc':l=l.sort((a,b)=>b.localeCompare(a));break;
-case'reverse':l=l.reverse();break;
-case'shuffle':for(let i=l.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[l[i],l[j]]=[l[j],l[i]]}break;
-case'number':l=l.map((x,i)=>`${i+1}. ${x}`);break;
-case'filter':const kw=document.getElementById('dcFilter').value;if(!kw){st.textContent='⚠️ Enter keyword';return}l=l.filter(x=>x.includes(kw));break;
-case'replace':const f=document.getElementById('dcFind').value,r=document.getElementById('dcReplace').value;if(!f){st.textContent='⚠️ Enter search text';return}l=l.map(x=>x.split(f).join(r));break;
-}out.value=l.join('\n');if(st)st.textContent=`✅ ${tb} lines → ${l.length} lines`;
-}catch(e){if(st)st.textContent='❌ '+e.message}
-}
-function dcCount(){const i=document.getElementById('dcInput');const l=i.value?i.value.split('\n').filter(x=>x.trim()).length:0;document.getElementById('dcStats').textContent='📊 Total '+l+' lines'}
-
-// ====== Note Tool ======
-function updateNotePreview(){
-const inp=document.getElementById('noteInput').value;
-const prev=document.getElementById('notePreview');
-let html=inp.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-html=html.replace(/^### (.+)$/gm,'<h3>$1</h3>');
-html=html.replace(/^## (.+)$/gm,'<h2>$1</h2>');
-html=html.replace(/^# (.+)$/gm,'<h1>$1</h1>');
-html=html.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
-html=html.replace(/\*(.+?)\*/g,'<em>$1</em>');
-html=html.replace(/`(.+?)`/g,'<code>$1</code>');
-html=html.replace(/^- (.+)$/gm,'<li>$1</li>');
-html=html.replace(/^(\d+)\. (.+)$/gm,'<li>$1. $2</li>');
-html=html.replace(/\n{2,}/g,'</p><p>');
-html=html.replace(/\n/g,'<br>');
-prev.innerHTML='<p>'+html+'</p>';
-}
-function saveNote(){
-const v=document.getElementById('noteInput').value;
-localStorage.setItem('ai-xiaodou-note',v);
-document.getElementById('noteStatus').textContent='✅ Saved locally';
-setTimeout(()=>{const s=document.getElementById('noteStatus');if(s)s.textContent=''},2000);
-}
-function exportNote(){
-const v=document.getElementById('noteInput').value;
-const b=new Blob([v],{type:'text/markdown'});
-const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='note.md';a.click();
-document.getElementById('noteStatus').textContent='✅ Exported';
-}
-function clearNote(){
-document.getElementById('noteInput').value='';document.getElementById('notePreview').innerHTML='';
-document.getElementById('noteStatus').textContent='🗑️ Cleared';
-localStorage.removeItem('ai-xiaodou-note');
-}
-
-function clearAll(){
-['dcInput','dcOutput','fcInput','fcOutput'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
-['dcStatus','fcStatus','dcStats'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=''});
-}
-
-function copyResult(id){
-const e=document.getElementById(id);
-navigator.clipboard.writeText(e.value).catch(()=>{e.select();document.execCommand('copy')});
-const s=document.getElementById('fcStatus')||document.getElementById('dcStatus');
-if(s)s.textContent='✅ Copied';
-}
-
 document.addEventListener('DOMContentLoaded',()=>{
-document.querySelectorAll('.nav-item').forEach(el=>{el.addEventListener('click',()=>{const c=el.dataset.category;if(c)renderCategory(c)})});
-renderCategory('tools');
-document.querySelectorAll('.side-tab').forEach(el=>{el.addEventListener('click',()=>switchTab(el.dataset.tab))});
 document.querySelectorAll('.article-nav-item').forEach(el=>{el.addEventListener('click',()=>{document.querySelectorAll('.article-nav-item').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderArticleList(el.dataset.cat)})});
+loadArticles();
 });
-
-function switchTab(tab){
-document.querySelectorAll('.side-tab').forEach(el=>el.classList.toggle('active',el.dataset.tab===tab));
-const isTools=tab==='tools';
-document.getElementById('toolsNav').style.display=isTools?'':'none';
-document.getElementById('articlesNav').style.display=isTools?'none':'';
-document.getElementById('mainContent').style.display=isTools?'':'none';
-document.getElementById('articleContent').style.display=isTools?'none':'';
-if(!isTools&&!window._articlesLoaded){loadArticles()}
-}
 
 let articlesData=[];
 const catNames={'ai-research':'AI-Assisted Research',prompt:'Prompt Sharing'};
@@ -501,7 +268,7 @@ const body=document.getElementById('modalBody');
 if(type==='about'){
 body.innerHTML='<h2>📕 About AI Xiaodou</h2><p>AI Xiaodou is a collection of tools focused on <strong>academic research and productivity</strong>, making AI truly work for you.</p><div class="modal-item"><div class="mi-icon">🫘</div><div class="mi-text">Academic-focused tools<small>Literature search · Data analysis · Format conversion</small></div></div><div class="modal-item"><div class="mi-icon">🌟</div><div class="mi-text">Continuously iterating<small>Auto literature review generation, deep StataMCP integration, more online tools</small></div></div>';
 }else if(type==='contact'){
-body.innerHTML='<h2>✉️ Contact Me</h2><div class="modal-item"><div class="mi-icon">💬</div><div class="mi-text">QQ Group: 812419882<small>Join the community for updates and help</small></div></div><div class="modal-item"><div class="mi-icon">📰</div><div class="mi-text">WeChat Official Account: AI Xiaodou<small>Follow for latest article updates</small></div></div>';
+body.innerHTML='<h2>✉️ Contact Me</h2><div class="modal-item"><div class="mi-icon">📧</div><div class="mi-text">Email: st2176593459@163.com<small>Feel free to reach out</small></div></div><div class="modal-item"><div class="mi-icon">💬</div><div class="mi-text">QQ Group: 812419882<small>Join the community for updates and help</small></div></div><div class="modal-item"><div class="mi-icon">📰</div><div class="mi-text">WeChat Official Account: AI Xiaodou<small>Follow for latest article updates</small></div></div>';
 }
 modal.style.display='flex';
 }
@@ -529,7 +296,7 @@ box.innerHTML=list.map(a=>`<div class="search-item" onclick="pickSearch('${a.fil
 
 function pickSearch(file){
 document.getElementById('searchOverlay').style.display='none';
-switchTab('articles');
+document.getElementById('articleContent').style.display='';
 setTimeout(()=>openArticle(file),50);
 }
 
